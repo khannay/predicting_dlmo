@@ -121,6 +121,47 @@ function clockModel_ForgerSimpler(t, y) {
 }
 
 
+function clockModel_Hannay(t, y) {
+
+    let index = Math.round(t / DELTA_T);
+    let I = localLD[index];
+
+    let R = y[0];
+    let Psi = y[1];
+    let n = y[2];
+
+    // Copy the parameters over
+    let tau = 23.80;
+    let K = 0.06358;
+    let gamma = 0.024;
+    let Beta1 = -0.09318;
+    let A1 = 0.3855;
+    let A2 = 0.1977;
+    let BetaL1 = -0.0026;
+    let BetaL2 = -0.957756;
+    let sigma = 0.0400692;
+    let G = 33.75;
+    let alpha_0 = 0.05;
+    let delta = 0.0075;
+    let p = 1.5 
+    let I0 = 9325.0
+
+    let alpha_light = alpha_0*Math.pow(I, p)/(Math.pow(I, p) + I0)
+    let dydt = [0, 0, 0];
+
+    let Bhat=self.G*(1.0-n)*alpha_light;
+    let LightAmp = A1*0.5*Bhat*(1.0-Math.pow(R,4.0))*Math.cos(Psi+BetaL1) + A2*0.5*Bhat*R*(1.0-Math.pow(R,8.0))* Math.cos(2.0*Psi+BetaL2);
+    let LightPhase = sigma*Bhat-A1*Bhat*0.5*(Math.pow(R,3.0)+1.0/R)*Math.sin(Psi+BetaL1)- A2*Bhat*0.5*(1.0+Math.pow(R,8.0))*Math.sin(2.0*Psi+BetaL2);
+
+    dydt[0]=-1.0*gamma*R+K*Math.cos(self.Beta1)/2.0*R*(1.0-Math.pow(R,4.0))+LightAmp;
+    dydt[1]=2.0*Math.Pi/tau+K/2.0*Math.sin(Beta1)*(1+Math.pow(R,4.0))+LightPhase;
+    dydt[2]=60.0*(alpha_light*(1.0-n)-delta*n);
+
+
+    return dydt;
+}
+
+
 function clockModel_HilaireNonPhotic(t, y) {
 
     let index = Math.round(t / DELTA_T);
@@ -188,7 +229,6 @@ function rk4(tot, initialConditions) {
     let output = new Array(N + 1);
 
     let w = [initialConditions[0], initialConditions[1], initialConditions[2]];
-
     output[0] = [w[0], w[1], w[2]];
 
 
