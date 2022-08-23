@@ -145,6 +145,7 @@ function formatDataForIntegration(dates, times, light, counts, sleepWake) {
 
 
 function getDataForPlot(output, firstTimestamp) {
+    
     let data = [];
     let stepCounter = 0;
     let labels = [];
@@ -192,7 +193,65 @@ function getDataForPlot(output, firstTimestamp) {
 }
 
 
+
+// function getDataForPlotHannay(output, firstTimestamp) {
+//     console.log("get data for plot")
+//     let data = [];
+//     let labels = [];
+    
+//     let lengthOfDay = 24.0/DELTA_T;
+
+
+//     let stepCounter = 0;
+//     for (let i = 0; i < output.length; i = i + 500) {
+//         let array = output[i];
+//         data[stepCounter] = array[0];
+//         let currentTime = i * DELTA_T + (firstTimestamp % 24);
+//         labels[stepCounter] = currentTime.toFixed(2);
+//         stepCounter = stepCounter + 1;
+//     }
+    
+//     let minimumTime = -24;
+//     let minimumValue = 100;
+//     for (let i = output.length - lengthOfDay + 1; i < output.length - 1; i = i + 1) {
+//     //    for (let i = 1; i < output.length - 1; i = i + 1) {
+
+//         let lastPhase = output[i-1][1] 
+//         let currentPhase = output[i][1] 
+//         let nextPhase = output[i+1][1]
+   
+//         let arrayCurrentStep = output[i];
+//         let arrayPastStep = output[i - 1];
+//         let arrayNextStep = output[i + 1];
+
+
+
+//         if (arrayPastStep[0] > arrayCurrentStep[0] && arrayCurrentStep[0] < arrayNextStep[0]){
+//             let tempMinimumTime = i * DELTA_T + (firstTimestamp % 24) - dlmoOffset;
+//             let tempMinimumValue = arrayCurrentStep[0];
+            
+//             if(tempMinimumTime > minimumTime + 12){ // If enough time has passed since the last time
+//                 minimumValue = 100;
+//             }
+            
+//             if (tempMinimumValue < minimumValue && tempMinimumValue < 0){
+//                 minimumValue = tempMinimumValue;
+//                 minimumTime = i * DELTA_T;
+//             }
+//         }
+//     }
+    
+//     var dt = new Date(firstTimestamp*3600*1000); // Convert hours to milliseconds
+//     let offset = (dt.getTimezoneOffset())/60.0; // Convert minutes to hours 
+
+//     minimumTime = minimumTime + ((firstTimestamp - offset - dlmoOffset + 24) % 24) ;
+    
+//     return {data, labels, minimumTime}
+// }
+
+
 onmessage = function (e) {
+    console.log("Models are being opened")
     self.importScripts("models.js");
 
     const {rawData, filename} = e.data;

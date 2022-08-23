@@ -143,21 +143,19 @@ function clockModel_Hannay(t, y) {
     let G = 33.75;
     let alpha_0 = 0.05;
     let delta = 0.0075;
-    let p = 1.5 
-    let I0 = 9325.0
+    let p = 1.5; 
+    let I0 = 9325.0;
 
-    let alpha_light = alpha_0*Math.pow(I, p)/(Math.pow(I, p) + I0)
+    let alpha_light = alpha_0*Math.pow(I, p)/(Math.pow(I, p) + I0);
     let dydt = [0, 0, 0];
 
-    let Bhat=self.G*(1.0-n)*alpha_light;
+    let Bhat = G*(1.0-n)*alpha_light;
     let LightAmp = A1*0.5*Bhat*(1.0-Math.pow(R,4.0))*Math.cos(Psi+BetaL1) + A2*0.5*Bhat*R*(1.0-Math.pow(R,8.0))* Math.cos(2.0*Psi+BetaL2);
-    let LightPhase = sigma*Bhat-A1*Bhat*0.5*(Math.pow(R,3.0)+1.0/R)*Math.sin(Psi+BetaL1)- A2*Bhat*0.5*(1.0+Math.pow(R,8.0))*Math.sin(2.0*Psi+BetaL2);
+    let LightPhase = sigma*Bhat-A1*Bhat*0.5*(Math.pow(R,3.0)+1.0/R)*Math.sin(Psi+BetaL1) - A2*Bhat*0.5*(1.0+Math.pow(R,8.0))*Math.sin(2.0*Psi+BetaL2);
 
-    dydt[0]=-1.0*gamma*R+K*Math.cos(self.Beta1)/2.0*R*(1.0-Math.pow(R,4.0))+LightAmp;
-    dydt[1]=2.0*Math.Pi/tau+K/2.0*Math.sin(Beta1)*(1+Math.pow(R,4.0))+LightPhase;
-    dydt[2]=60.0*(alpha_light*(1.0-n)-delta*n);
-
-
+    dydt[0] = -1.0*gamma*R+K*Math.cos(Beta1)/2.0*R*(1.0-Math.pow(R,4.0))+LightAmp;
+    dydt[1] = 2.0*Math.Pi/tau+K/2.0*Math.sin(Beta1)*(1+Math.pow(R,4.0))+LightPhase;
+    dydt[2] = 60.0*(alpha_light*(1.0-n)-delta*n);
     return dydt;
 }
 
@@ -261,6 +259,46 @@ function rk4(tot, initialConditions) {
 }
 
 
+function rk4_hannay(tot, initialConditions) {
+
+    let dt = DELTA_T;
+    let N = Math.round(tot / dt);
+    let t = 0;
+    let output = new Array(N + 1);
+
+    let w = [initialConditions[0], initialConditions[1], initialConditions[2]];
+    output[0] = [w[0], w[1], w[2]];
+
+
+    for (let i = 0; i < N; i++) {
+
+        let dydt = clockModel_Hannay(t, w);
+        let k1 = [dt * dydt[0], dt * dydt[1], dt * dydt[2]];
+        let w2 = [w[0] + k1[0] / 2, w[1] + k1[1] / 2, w[2] + k1[2] / 2];
+        dydt = clockModel_Hannay(t + dt / 2, w2);
+        let k2 = [dt * dydt[0], dt * dydt[1], dt * dydt[2]];
+        let w3 = [w[0] + k2[0] / 2, w[1] + k2[1] / 2, w[2] + k2[2] / 2];
+        dydt = clockModel_Hannay(t + dt / 2, w3);
+        let k3 = [dt * dydt[0], dt * dydt[1], dt * dydt[2]];
+        let w4 = [w[0] + k3[0], w[1] + k3[1], w[2] + k3[2]];
+        dydt = clockModel_Hannay(t + dt, w4);
+        let k4 = [dt * dydt[0], dt * dydt[1], dt * dydt[2]];
+        let w5 = [w[0] + (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]) / 6, w[1] + (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]) / 6, w[2] + (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2]) / 6];
+
+        w[0] = w5[0];
+        w[1] = w5[1];
+        w[2] = w5[2];
+
+        t = t + dt;
+
+        output[i + 1] = [w[0], w[1], w[2]];
+
+    }
+
+    return output;
+}
+
+
 function getCircadianOutput(timestamps, steps, sleep, firstTimestamp) {
 
     let lengthOfTimestamps = timestamps.length;
@@ -274,6 +312,26 @@ function getCircadianOutput(timestamps, steps, sleep, firstTimestamp) {
     let initialConditions = getICFromLimitCycleAtTime(firstTimestamp);
         
     let output = rk4(durationInHours, initialConditions);
+    // output = cropOutput(output, 72);
+
+    return output;
+}
+
+
+function getCircadianOutputHannay(timestamps, steps, sleep, firstTimestamp) {
+
+    let lengthOfTimestamps = timestamps.length;
+    let durationInHours = Math.round((timestamps[lengthOfTimestamps - 1] - timestamps[0]));
+    
+    populateLightFromStepsAndSleep(timestamps, steps, sleep);
+    let initialConditions = new Array(3);
+    initialConditions[0] = 0.70;
+    initialConditions[1] = 0.0;
+    initialConditions[2] = 0.0;
+    //TODO: Upgrade this later to do a better job of guessing the starting point 
+    //let initialConditions = getICFromLimitCycleAtTime(firstTimestamp);
+        
+    let output = rk4_hannay(durationInHours, initialConditions);
     // output = cropOutput(output, 72);
 
     return output;

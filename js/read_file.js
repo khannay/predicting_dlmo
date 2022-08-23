@@ -113,12 +113,14 @@ function showFile() {
             console.log(file);
             if (file.type.match(textFile) || file.type.match(excelFile)) {
                 reader.onload = function (event) {
-
+                    console.log("Here before worker")
                     var worker = new Worker('./js/prep_data.js');
+                    console.log("Here after worker")
                     worker.onmessage = function (e) {
                         if (typeof e.data === 'number') {
                             // bar.animate(e.data);
                         } else {
+                            console.log("Doing stuff")
                             const {filename, labels, data, minimumTime} = e.data;
                             // setPlot(labels, data);
                             setFilename(filename);
